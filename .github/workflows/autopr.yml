@@ -97,7 +97,7 @@ jobs:
     
     - name: Create analysis script
       run: |
-        cat > analyze_solution.js << 'EOF'
+        cat > analyze_solution.cjs << 'EOF'
         const fs = require('fs');
         
         // Read the data
@@ -206,7 +206,7 @@ jobs:
     - name: Run solution analysis
       id: analyze
       run: |
-        node analyze_solution.js
+        node analyze_solution.cjs
         
         # Extract recommendation for conditional logic
         RECOMMENDATION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('analysis_result.json', 'utf8')).recommendation)")
