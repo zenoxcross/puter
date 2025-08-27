@@ -1,40 +1,43 @@
-name: Maintain Release Merge PR
+name: Comment on PR with ritwic
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
-  update-release-pr:
+  check-diff:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Git
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-      - name: Check for existing PR
-        id: find-pr
-        uses: juliangruber/find-pull-request-action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          branch: release
-      - uses: actions/checkout@v4
-        if: steps.find-pr.outputs.number == ''
-        with:
-          ref: release
-      - name: Reset release branch
-        if: steps.find-pr.outputs.number == ''
-        run: |
-          git fetch origin main:main
-          git reset --hard main
-      - name: Create/Update PR
-        if: steps.find-pr.outputs.number == ''
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Update release branch
-          title: Merge Release Auto-PR
-          body: Merging this PR will invoke release actions          
-          branch: auto-update/release
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Get PR diff
+      id: diff
+      run: |
+        # Get the diff for the PR
+        git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+        
+        # Check if "ritwic" exists in the diff (case insensitive)
+        if grep -i "ritwic" pr_diff.txt > /dev/null; then
+          echo "contains_ritwic=true" >> $GITHUB_OUTPUT
+        else
+          echo "contains_ritwic=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Comment success on PR
+      if: steps.diff.outputs.contains_ritwic == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'success'
+          })
