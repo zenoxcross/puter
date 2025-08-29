@@ -1,0 +1,251 @@
+name: Analyze PR Solution Correctness
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  analyze-solution:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Get PR and Issue data
+      id: get_data
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Get PR data
+          const pr = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          
+          // Get diff
+          const diff = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            mediaType: {
+              format: 'diff'
+            }
+          });
+          
+          // Extract issue number from PR body or title
+          const prBody = pr.data.body || '';
+          const prTitle = pr.data.title || '';
+          const issuePattern = /#(\d+)|fixes?\s+#(\d+)|closes?\s+#(\d+)|resolves?\s+#(\d+)/gi;
+          let issueNumber = null;
+          let match;
+          
+          while ((match = issuePattern.exec(prBody + ' ' + prTitle)) !== null) {
+            issueNumber = match[1] || match[2] || match[3] || match[4];
+            break;
+          }
+          
+          let issueData = null;
+          if (issueNumber) {
+            try {
+              const issue = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: parseInt(issueNumber)
+              });
+              issueData = {
+                title: issue.data.title,
+                body: issue.data.body || '',
+                number: issueNumber
+              };
+            } catch (error) {
+              console.log(`Could not fetch issue #${issueNumber}: ${error.message}`);
+            }
+          }
+          
+          // Save data to files for the analysis script
+          const analysisData = {
+            pr: {
+              title: prTitle,
+              body: prBody,
+              number: context.issue.number
+            },
+            issue: issueData,
+            diff: diff.data
+          };
+          
+          fs.writeFileSync('analysis_data.json', JSON.stringify(analysisData, null, 2));
+          
+          return {
+            hasIssue: !!issueData,
+            issueNumber: issueNumber
+          };
+    
+    - name: Create analysis script
+      run: |
+        cat > analyze_solution.cjs << 'EOF'
+        const fs = require('fs');
+        
+        // Read the data
+        const data = JSON.parse(fs.readFileSync('analysis_data.json', 'utf8'));
+        
+        function analyzeSolution(data) {
+          const analysis = {
+            score: 0,
+            maxScore: 100,
+            issues: [],
+            strengths: [],
+            recommendation: 'NEEDS_REVIEW'
+          };
+          
+          // Check if PR addresses the issue
+          if (data.issue) {
+            analysis.strengths.push(`✅ Linked to issue #${data.issue.number}: "${data.issue.title}"`);
+            analysis.score += 20;
+            
+            // Simple keyword matching between issue and PR
+            const issueKeywords = extractKeywords(data.issue.body + ' ' + data.issue.title);
+            const prKeywords = extractKeywords(data.pr.body + ' ' + data.pr.title);
+            const diffKeywords = extractKeywords(data.diff);
+            
+            const commonKeywords = issueKeywords.filter(keyword => 
+              prKeywords.includes(keyword) || diffKeywords.includes(keyword)
+            );
+            
+            if (commonKeywords.length > 0) {
+              analysis.score += 25;
+              analysis.strengths.push(`✅ PR addresses issue keywords: ${commonKeywords.slice(0, 3).join(', ')}`);
+            } else {
+              analysis.issues.push(`⚠️ PR doesn't seem to address the issue's main concerns`);
+            }
+          } else {
+            analysis.issues.push(`⚠️ No linked issue found. Consider linking to an issue with 'fixes #123'`);
+          }
+          
+          // Analyze diff quality
+          const diffLines = data.diff.split('\n');
+          const addedLines = diffLines.filter(line => line.startsWith('+')).length;
+          const removedLines = diffLines.filter(line => line.startsWith('-')).length;
+          
+          if (addedLines > 0) {
+            analysis.score += 15;
+            analysis.strengths.push(`✅ Added ${addedLines} lines of code`);
+          }
+          
+          if (removedLines > 0) {
+            analysis.score += 10;
+            analysis.strengths.push(`✅ Cleaned up ${removedLines} lines`);
+          }
+          
+          // Check for test files
+          const hasTests = /\.(test|spec)\.(js|ts|py|java|go|php|rb)|\/__tests__\/|\/test\//i.test(data.diff);
+          if (hasTests) {
+            analysis.score += 20;
+            analysis.strengths.push(`✅ Includes test changes`);
+          } else {
+            analysis.issues.push(`⚠️ No test files detected in changes`);
+          }
+          
+          // Check for documentation updates
+          const hasDocs = /README|\.md|docs?\/|documentation/i.test(data.diff);
+          if (hasDocs) {
+            analysis.score += 10;
+            analysis.strengths.push(`✅ Updates documentation`);
+          }
+          
+          // Determine recommendation
+          if (analysis.score >= 80) {
+            analysis.recommendation = 'APPROVE';
+          } else if (analysis.score >= 60) {
+            analysis.recommendation = 'APPROVE_WITH_SUGGESTIONS';
+          } else if (analysis.score >= 40) {
+            analysis.recommendation = 'REQUEST_CHANGES';
+          } else {
+            analysis.recommendation = 'NEEDS_MAJOR_REVISION';
+          }
+          
+          return analysis;
+        }
+        
+        function extractKeywords(text) {
+          if (!text) return [];
+          return text.toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(word => word.length > 3 && !isStopWord(word))
+            .slice(0, 10); // Limit to prevent noise
+        }
+        
+        function isStopWord(word) {
+          const stopWords = ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'];
+          return stopWords.includes(word);
+        }
+        
+        // Run analysis
+        const result = analyzeSolution(data);
+        console.log(JSON.stringify(result, null, 2));
+        
+        // Write result for GitHub Actions
+        fs.writeFileSync('analysis_result.json', JSON.stringify(result, null, 2));
+        EOF
+    
+    - name: Run solution analysis
+      id: analyze
+      run: |
+        node analyze_solution.cjs
+        
+        # Extract recommendation for conditional logic
+        RECOMMENDATION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('analysis_result.json', 'utf8')).recommendation)")
+        echo "recommendation=$RECOMMENDATION" >> $GITHUB_OUTPUT
+    
+    - name: Comment analysis results
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const analysis = JSON.parse(fs.readFileSync('analysis_result.json', 'utf8'));
+          
+          const icons = {
+            'APPROVE': '✅',
+            'APPROVE_WITH_SUGGESTIONS': '👍',
+            'REQUEST_CHANGES': '⚠️',
+            'NEEDS_MAJOR_REVISION': '❌',
+            'NEEDS_REVIEW': '🔍'
+          };
+          
+          const icon = icons[analysis.recommendation] || '🔍';
+          
+          let comment = `## ${icon} Code Review Analysis\n\n`;
+          comment += `**Overall Score:** ${analysis.score}/${analysis.maxScore}\n`;
+          comment += `**Recommendation:** ${analysis.recommendation.replace(/_/g, ' ')}\n\n`;
+          
+          if (analysis.strengths.length > 0) {
+            comment += `### Strengths\n${analysis.strengths.map(s => `- ${s}`).join('\n')}\n\n`;
+          }
+          
+          if (analysis.issues.length > 0) {
+            comment += `### Areas for Improvement\n${analysis.issues.map(i => `- ${i}`).join('\n')}\n\n`;
+          }
+          
+          comment += `---\n*This is an automated analysis. Please review manually for final approval.*`;
+          
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
