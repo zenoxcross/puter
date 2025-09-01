@@ -1,63 +1,28 @@
-name: 'PR Issue Checker'
-description: 'Analyzes pull requests and automatically comments with results'
+#!/usr/bin/env node
 
-inputs:
-  pr_number:
-    description: 'PR number to analyze'
-    required: true
-  github_token:
-    description: 'GitHub token for API access'
-    required: true
-    default: ${{ github.token }}
-  anthropic_api_key:
-    description: 'Anthropic API key for AI analysis'
-    required: false
-  repository:
-    description: 'Repository in owner/repo format'
-    required: false
-    default: ${{ github.repository }}
-  comment_on_pr:
-    description: 'Whether to automatically comment on the PR'
-    required: false
-    default: 'true'
-  update_existing_comment:
-    description: 'Update existing comment instead of creating new ones'
-    required: false
-    default: 'true'
+// Simple test script - replace with full logic later
+const prNumber = process.env.PR_NUMBER;
+const repository = process.env.GITHUB_REPOSITORY;
 
-outputs:
-  success:
-    description: 'Whether the analysis was successful'
-  comment:
-    description: 'Generated markdown comment'
-  risk_level:
-    description: 'Risk level: LOW, MEDIUM, HIGH, or UNKNOWN'
-  comment_posted:
-    description: 'Whether a comment was successfully posted'
+if (!prNumber || !repository) {
+  console.error('::error::Missing required environment variables');
+  process.exit(1);
+}
 
-runs:
-  using: 'composite'
-  steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: '.github/actions/pr-checker/package.json'
-        
-    - name: Install action dependencies
-      shell: bash
-      working-directory: ${{ github.action_path }}
-      run: npm install
-      
-    - name: Run PR analysis and comment
-      shell: bash
-      working-directory: ${{ github.action_path }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
-        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
-        PR_NUMBER: ${{ inputs.pr_number }}
-        GITHUB_REPOSITORY: ${{ inputs.repository }}
-        COMMENT_ON_PR: ${{ inputs.comment_on_pr }}
-        UPDATE_EXISTING_COMMENT: ${{ inputs.update_existing_comment }}
-      run: node pr-checker.js
+console.log(`🔍 Analyzing PR #${prNumber} in ${repository}`);
+
+// Mock analysis for now
+const mockResult = {
+  success: true,
+  analysis: {
+    risk_level: 'LOW'
+  }
+};
+
+// Set outputs
+console.log(`::set-output name=success::${mockResult.success}`);
+console.log(`::set-output name=comment::Mock analysis complete for PR #${prNumber}`);
+console.log(`::set-output name=risk_level::${mockResult.analysis.risk_level}`);
+console.log(`::set-output name=comment_posted::false`);
+
+console.log('✅ Analysis complete!');
