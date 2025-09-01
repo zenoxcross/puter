@@ -1,64 +1,63 @@
-#!/usr/bin/env node
+name: 'PR Issue Checker'
+description: 'Analyzes pull requests and automatically comments with results'
 
-const PRIssueChecker = require('./PRIssueChecker');
-const CommentHandler = require('./CommentHandler');
+inputs:
+  pr_number:
+    description: 'PR number to analyze'
+    required: true
+  github_token:
+    description: 'GitHub token for API access'
+    required: true
+    default: ${{ github.token }}
+  anthropic_api_key:
+    description: 'Anthropic API key for AI analysis'
+    required: false
+  repository:
+    description: 'Repository in owner/repo format'
+    required: false
+    default: ${{ github.repository }}
+  comment_on_pr:
+    description: 'Whether to automatically comment on the PR'
+    required: false
+    default: 'true'
+  update_existing_comment:
+    description: 'Update existing comment instead of creating new ones'
+    required: false
+    default: 'true'
 
-// Parse inputs
-const prNumber = process.env.PR_NUMBER;
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
-const shouldComment = process.env.COMMENT_ON_PR === 'true';
-const updateExisting = process.env.UPDATE_EXISTING_COMMENT === 'true';
+outputs:
+  success:
+    description: 'Whether the analysis was successful'
+  comment:
+    description: 'Generated markdown comment'
+  risk_level:
+    description: 'Risk level: LOW, MEDIUM, HIGH, or UNKNOWN'
+  comment_posted:
+    description: 'Whether a comment was successfully posted'
 
-if (!prNumber || !owner || !repo) {
-  console.error('::error::Missing required inputs');
-  process.exit(1);
-}
-
-async function main() {
-  const checker = new PRIssueChecker();
-  
-  // Run analysis
-  const result = await checker.checkPRCorrectness(owner, repo, prNumber);
-  const comment = checker.generateGitHubComment(result);
-  
-  // Set outputs
-  console.log(`::set-output name=success::${result.success}`);
-  console.log(`::set-output name=comment::${comment.replace(/\n/g, '\\n').replace(/"/g, '\\"')}`);
-  console.log(`::set-output name=risk_level::${result.success ? result.analysis.risk_level : 'UNKNOWN'}`);
-  
-  // Handle PR commenting
-  let commentPosted = false;
-  if (shouldComment && result.success) {
-    try {
-      const commentHandler = new CommentHandler({
-        githubToken: process.env.GITHUB_TOKEN,
-        owner,
-        repo
-      });
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: '.github/actions/pr-checker/package.json'
+        
+    - name: Install action dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci
       
-      commentPosted = await commentHandler.postOrUpdateComment(
-        prNumber, 
-        comment, 
-        updateExisting
-      );
-      
-      console.log(`::set-output name=comment_posted::${commentPosted}`);
-      
-    } catch (error) {
-      console.error('::warning::Failed to post comment:', error.message);
-    }
-  }
-  
-  // GitHub annotations
-  if (result.success && result.analysis.risk_level === 'HIGH') {
-    console.log('::warning::High risk changes detected');
-  }
-  
-  console.log('\n📝 Analysis Results:');
-  console.log(comment);
-}
-
-main().catch(error => {
-  console.error('::error::Analysis failed:', error.message);
-  process.exit(1);
-});
+    - name: Run PR analysis and comment
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        GITHUB_REPOSITORY: ${{ inputs.repository }}
+        COMMENT_ON_PR: ${{ inputs.comment_on_pr }}
+        UPDATE_EXISTING_COMMENT: ${{ inputs.update_existing_comment }}
+      run: node pr-checker.js
