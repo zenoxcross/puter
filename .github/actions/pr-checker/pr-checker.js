@@ -287,40 +287,41 @@ ${file.patch ? `**Code Changes:**\n\`\`\`diff\n${file.patch.substring(0, 1500)}\
     ).join('\n\n');
 
     return `Please analyze this pull request based on its description and code changes. Since there are no linked issues, evaluate whether the code changes align with what the PR description claims to accomplish.
+            # PULL REQUEST DETAILS
+            **Title:** ${prData.title}
+            **Description:** ${prData.body ? prData.body.substring(0, 2000) : 'No description provided'}
+            **Author:** ${prData.user.login}
+            **Changes:** +${prData.additions} -${prData.deletions} lines across ${prData.changed_files} files
 
-# PULL REQUEST DETAILS
-**Title:** ${prData.title}
-**Description:** ${prData.body ? prData.body.substring(0, 2000) : 'No description provided'}
-**Author:** ${prData.user.login}
-**Changes:** +${prData.additions} -${prData.deletions} lines across ${prData.changed_files} files
+            # CODE CHANGES
+            ${changesText}
 
-# CODE CHANGES
-${changesText}
+            # ANALYSIS INSTRUCTIONS
+            Since no issues are linked to this PR, please analyze whether the code changes match the PR title and description:
 
-# ANALYSIS INSTRUCTIONS
-Since no issues are linked to this PR, please analyze whether the code changes match the PR title and description:
+            1. **CORRECTNESS_SCORE** (0-10): How well do the code changes align with what the PR title/description claims?
+            2. **COMPLETENESS_SCORE** (0-10): Do the changes appear to fully implement what's described?
+            3. **RISK_LEVEL** (LOW/MEDIUM/HIGH): What is the risk level of these changes?
+            4. **MISSING_REQUIREMENTS**: What aspects mentioned in the PR description appear unaddressed in the code?
+            5. **IMPLEMENTATION_QUALITY**: Assessment of the code quality and approach
+            6. **RECOMMENDATIONS**: Specific suggestions for improvement
 
-1. **CORRECTNESS_SCORE** (0-10): How well do the code changes align with what the PR title/description claims?
-2. **COMPLETENESS_SCORE** (0-10): Do the changes appear to fully implement what's described?
-3. **RISK_LEVEL** (LOW/MEDIUM/HIGH): What is the risk level of these changes?
-4. **MISSING_REQUIREMENTS**: What aspects mentioned in the PR description appear unaddressed in the code?
-5. **IMPLEMENTATION_QUALITY**: Assessment of the code quality and approach
-6. **RECOMMENDATIONS**: Specific suggestions for improvement
+            ${prData.body && prData.body.trim() ? 
+              'Focus on whether the implementation matches the stated goals in the PR description.' : 
+              'NOTE: This PR has minimal description. Analyze the code changes and infer the intent from the changes themselves. Comment on the lack of clear description.'}
 
-${prData.body && prData.body.trim() ? 
-  'Focus on whether the implementation matches the stated goals in the PR description.' : 
-  'NOTE: This PR has minimal description. Analyze the code changes and infer the intent from the changes themselves. Comment on the lack of clear description.'}
-
-Please format your response as JSON with these exact keys:
-{
-  "correctness_score": <number>,
-  "completeness_score": <number>, 
-  "risk_level": "<LOW|MEDIUM|HIGH>",
-  "missing_requirements": "<detailed analysis or 'None identified'>",
-  "implementation_quality": "<assessment of code quality>",
-  "recommendations": ["<recommendation 1>", "<recommendation 2>", "..."]
-}`;
+            Please format your response as JSON with these exact keys:
+            {
+              "correctness_score": <number>,
+              "completeness_score": <number>, 
+              "risk_level": "<LOW|MEDIUM|HIGH>",
+              "missing_requirements": "<detailed analysis or 'None identified'>",
+              "implementation_quality": "<assessment of code quality>",
+              "recommendations": ["<recommendation 1>", "<recommendation 2>", "..."]
+            }`;
   }
+
+  async analyzeWithClaude(prData, issues, fileChanges){
     const prompt = this.buildAnalysisPrompt(prData, issues, fileChanges);
     
     try {
@@ -359,50 +360,50 @@ Please format your response as JSON with these exact keys:
   buildAnalysisPrompt(prData, issues, fileChanges) {
     const issuesText = issues.map(issue => 
       `### Issue #${issue.number}: ${issue.title}
-**Description:** ${issue.body.substring(0, 1000)}${issue.body.length > 1000 ? '...' : ''}
-**Labels:** ${issue.labels.join(', ') || 'None'}
-**Status:** ${issue.state}`
-    ).join('\n\n');
+      **Description:** ${issue.body.substring(0, 1000)}${issue.body.length > 1000 ? '...' : ''}
+      **Labels:** ${issue.labels.join(', ') || 'None'}
+      **Status:** ${issue.state}`
+          ).join('\n\n');
 
-    const changesText = fileChanges.slice(0, 15).map(file => 
-      `### File: ${file.filename} (${file.status})
-**Changes:** +${file.additions} -${file.deletions}
-${file.patch ? `**Code Changes:**\n\`\`\`diff\n${file.patch.substring(0, 1500)}\n\`\`\`` : '**No patch data available**'}`
-    ).join('\n\n');
+          const changesText = fileChanges.slice(0, 15).map(file => 
+            `### File: ${file.filename} (${file.status})
+      **Changes:** +${file.additions} -${file.deletions}
+      ${file.patch ? `**Code Changes:**\n\`\`\`diff\n${file.patch.substring(0, 1500)}\n\`\`\`` : '**No patch data available**'}`
+          ).join('\n\n');
 
-    return `Please analyze this pull request against its linked issues to determine if the implementation correctly addresses the requirements.
+          return `Please analyze this pull request against its linked issues to determine if the implementation correctly addresses the requirements.
 
-# PULL REQUEST DETAILS
-**Title:** ${prData.title}
-**Description:** ${prData.body ? prData.body.substring(0, 2000) : 'No description provided'}
-**Author:** ${prData.user.login}
-**Changes:** +${prData.additions} -${prData.deletions} lines across ${prData.changed_files} files
+      # PULL REQUEST DETAILS
+      **Title:** ${prData.title}
+      **Description:** ${prData.body ? prData.body.substring(0, 2000) : 'No description provided'}
+      **Author:** ${prData.user.login}
+      **Changes:** +${prData.additions} -${prData.deletions} lines across ${prData.changed_files} files
 
-# LINKED ISSUES
-${issuesText}
+      # LINKED ISSUES
+      ${issuesText}
 
-# CODE CHANGES
-${changesText}
+      # CODE CHANGES
+      ${changesText}
 
-# ANALYSIS INSTRUCTIONS
-Please provide a thorough analysis addressing:
+      # ANALYSIS INSTRUCTIONS
+      Please provide a thorough analysis addressing:
 
-1. **CORRECTNESS_SCORE** (0-10): How well does the PR implementation match the issue requirements?
-2. **COMPLETENESS_SCORE** (0-10): Are all aspects of the linked issues addressed?
-3. **RISK_LEVEL** (LOW/MEDIUM/HIGH): What is the risk level of these changes?
-4. **MISSING_REQUIREMENTS**: What specific requirements from the issues appear to be unaddressed?
-5. **IMPLEMENTATION_QUALITY**: Comments on code quality, approach, and best practices
-6. **RECOMMENDATIONS**: Specific actionable suggestions for improvement
+      1. **CORRECTNESS_SCORE** (0-10): How well does the PR implementation match the issue requirements?
+      2. **COMPLETENESS_SCORE** (0-10): Are all aspects of the linked issues addressed?
+      3. **RISK_LEVEL** (LOW/MEDIUM/HIGH): What is the risk level of these changes?
+      4. **MISSING_REQUIREMENTS**: What specific requirements from the issues appear to be unaddressed?
+      5. **IMPLEMENTATION_QUALITY**: Comments on code quality, approach, and best practices
+      6. **RECOMMENDATIONS**: Specific actionable suggestions for improvement
 
-Please format your response as JSON with these exact keys:
-{
-  "correctness_score": <number>,
-  "completeness_score": <number>, 
-  "risk_level": "<LOW|MEDIUM|HIGH>",
-  "missing_requirements": "<detailed list or 'None identified'>",
-  "implementation_quality": "<assessment of code quality>",
-  "recommendations": ["<recommendation 1>", "<recommendation 2>", "..."]
-}`;
+      Please format your response as JSON with these exact keys:
+      {
+        "correctness_score": <number>,
+        "completeness_score": <number>, 
+        "risk_level": "<LOW|MEDIUM|HIGH>",
+        "missing_requirements": "<detailed list or 'None identified'>",
+        "implementation_quality": "<assessment of code quality>",
+        "recommendations": ["<recommendation 1>", "<recommendation 2>", "..."]
+      }`;
   }
 
   parseClaudeResponse(response) {
