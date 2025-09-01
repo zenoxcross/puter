@@ -1,0 +1,39 @@
+name: PR Issue Correctness Checker
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to check'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  check-pr-correctness:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Analyze PR and Comment
+      id: analysis
+      uses: ./.github/actions/pr-checker
+      with:
+        pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        comment_on_pr: ${{ github.event_name == 'pull_request' }}
+        
+    - name: Show results
+      run: |
+        echo "Analysis successful: ${{ steps.analysis.outputs.success }}"
+        echo "Risk level: ${{ steps.analysis.outputs.risk_level }}"
+        echo "Comment posted: ${{ steps.analysis.outputs.comment_posted }}"

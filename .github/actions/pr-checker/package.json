@@ -1,0 +1,12 @@
+{
+  "name": "pr-issue-checker-action",
+  "version": "1.0.0",
+  "description": "GitHub Action for PR issue correctness checking",
+  "main": "pr-checker.js",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
