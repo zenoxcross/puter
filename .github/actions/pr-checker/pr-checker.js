@@ -143,9 +143,23 @@ class PRAnalyzer {
     
     // Patterns to match issue references
     const patterns = [
-      /#(\d+)/g,                                               // #123
+      // Standard formats
+      /#(\d+)(?!\w)/g,                                         // #123 (but not #123abc)
       /(?:fix(?:es)?|close(?:s)?|resolve(?:s)?)\s+#(\d+)/gi,  // fixes #123
-      /(?:fix(?:es)?|close(?:s)?|resolve(?:s)?)\s+(\d+)/gi    // fixes 123
+      /(?:fix(?:es)?|close(?:s)?|resolve(?:s)?)\s+(\d+)/gi,   // fixes 123
+      
+      // GitHub URL formats
+      /github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)/gi,     // github.com/owner/repo/issues/123
+      /https:\/\/github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)/gi, // https://github.com/owner/repo/issues/123
+      
+      // Your specific format
+      /#https:\/\/github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)/gi, // #https://github.com/owner/repo/issues/123
+      
+      // Markdown link format
+      /\[#?(\d+)\]\(https:\/\/github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/\d+\)/gi, // [#123](url) or [123](url)
+      
+      // Cross-repo references
+      /[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+#(\d+)/gi             // owner/repo#123
     ];
     
     const issueNumbers = new Set();
@@ -154,7 +168,10 @@ class PRAnalyzer {
       let match;
       pattern.lastIndex = 0; // Reset regex state
       while ((match = pattern.exec(text)) !== null) {
-        issueNumbers.add(parseInt(match[1]));
+        const issueNumber = parseInt(match[1]);
+        if (issueNumber && !isNaN(issueNumber)) {
+          issueNumbers.add(issueNumber);
+        }
       }
     });
     
