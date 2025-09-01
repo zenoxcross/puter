@@ -155,6 +155,7 @@ export default {
         })
 
         $el_window.find('.remove-profile-picture').on('click', async function (e) {
+            
             // Remove profile picture by setting it to null
             update_profile(window.user.username, {picture: null});
             
