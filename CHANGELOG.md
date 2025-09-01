@@ -1,5 +1,70 @@
 # Changelog
 
+## 1.0.0 (2025-09-01)
+
+
+### Features
+
+* ([#954](https://github.com/zenoxcross/puter/issues/954)) Add Vietnamese translations for billing-related terms ([267a55a](https://github.com/zenoxcross/puter/commit/267a55aae50f87edb483abb375029ff79e736112))
+* add brazillian translations for billing-related terms in br.js ([e66df14](https://github.com/zenoxcross/puter/commit/e66df14862e6dd7278623279e43e2189e7ddafe5))
+* add brazillian translations for billing-related terms in br.js (revision) ([fdfc90a](https://github.com/zenoxcross/puter/commit/fdfc90a9317a19d45a0b2b3ad283be9a10a92732))
+* add Escape key functionality to UIPrompt for closing the prompt ([e1b6c83](https://github.com/zenoxcross/puter/commit/e1b6c83813d03809aba0abdecbf6de5529728031))
+* add missing Igbo translations for billing-related terms ([f0f19e7](https://github.com/zenoxcross/puter/commit/f0f19e727e574a8558fcbbf27ba501f434db69f8))
+* add reset edit changes button to dev-center ([55ffd80](https://github.com/zenoxcross/puter/commit/55ffd801e007723758eacc17ec732ee5a336123e))
+* add vietnamese translations for billing in vi.js ([3e26dbe](https://github.com/zenoxcross/puter/commit/3e26dbe6a0411fe75c36cf2866d34f28a2dcb553))
+* added a few Korean translatations ([b23e800](https://github.com/zenoxcross/puter/commit/b23e800f4e70f162b52cc15053d03961a37033bb))
+* added tagify in Filetype-Association input in dev center ([0cd1f15](https://github.com/zenoxcross/puter/commit/0cd1f151b5986ede431f1792139fa1a5471ae059))
+* complete Hungarian translation of Puter [#972](https://github.com/zenoxcross/puter/issues/972) ([7d2787d](https://github.com/zenoxcross/puter/commit/7d2787d26b3a64cbc128fb2cb3871b43b41912fe))
+* Complete the German (Deutsch) translation of Puter ([05fef67](https://github.com/zenoxcross/puter/commit/05fef6749e8d80f13ab94a4e0ea49ce4972a0961))
+* Complete the Vietnamese translation of Puter [#954](https://github.com/zenoxcross/puter/issues/954) ([56489c3](https://github.com/zenoxcross/puter/commit/56489c33f611fc053096b455e4cb7b3d8f20852c))
+* enable/disable save button in dev-center iff changes made ([63a0053](https://github.com/zenoxcross/puter/commit/63a0053da8c76bf4ac175c7f17353225443dd342))
+* set max token to 8096 ([b2ea8a3](https://github.com/zenoxcross/puter/commit/b2ea8a3888c5496858d257018071ba54abd6f4a8))
+
+
+### Bug Fixes
+
+* acl check for subdomain on access ([c69006e](https://github.com/zenoxcross/puter/commit/c69006e1852befa93f94a7c45651025214941a4e))
+* add an id to `My Websites` content menu item ([e662c78](https://github.com/zenoxcross/puter/commit/e662c782b745f4f98024d1353a6a162d5fe58c44))
+* add fallback moderation in case openai goes down ([c6e814d](https://github.com/zenoxcross/puter/commit/c6e814daa80eec01c10f319ebebcb84c42cd26e1))
+* add id to the setting menu item in user option menu ([67ca4cc](https://github.com/zenoxcross/puter/commit/67ca4ccf20fd714848121192d5ae7c41f3763da4))
+* add missing import ([e279dc6](https://github.com/zenoxcross/puter/commit/e279dc6e5f4095550f41aadd194ea94e1e2a2271))
+* add missing permissions ([69e9df1](https://github.com/zenoxcross/puter/commit/69e9df1ae21cf906dfcc3d9d7a23455e5274271c))
+* attempt fix for prod issue with app icons ([925ebd5](https://github.com/zenoxcross/puter/commit/925ebd531013e36ee5c05d53ef229d314fb89435))
+* bad import for TeePromise ([acf8ae3](https://github.com/zenoxcross/puter/commit/acf8ae302ec4ee79c11c2b0e810edd53f21446c5))
+* bug in writeFile rename ([298609c](https://github.com/zenoxcross/puter/commit/298609c6e9080e00c90b66c673e104d90f9d3ed0))
+* context error in user connected event ([9600823](https://github.com/zenoxcross/puter/commit/96008233ba4935e789cd092c07aa8b351cb44d45))
+* correct AI comment faults ([b40d453](https://github.com/zenoxcross/puter/commit/b40d4534a71565a7f2d0ae278c98d7326c5aa963))
+* correct Igbo translation for "Free" in billing terms ([6f4d57a](https://github.com/zenoxcross/puter/commit/6f4d57a3c6da607038f4fbe49c691478f47933be))
+* database issue with KBKV update ([7ba1b76](https://github.com/zenoxcross/puter/commit/7ba1b7656b5e24375cad639b9a8e37577b526c09))
+* fake_chat default model and usage errors ([13a895b](https://github.com/zenoxcross/puter/commit/13a895b76b1e5a677c2eeeb0a07be6ce9fd02a99))
+* fix issue when there is an assistant role ([9965f21](https://github.com/zenoxcross/puter/commit/9965f219d85ae1b581e34fc5405464b085b968b2))
+* fullpage mode ([65d9188](https://github.com/zenoxcross/puter/commit/65d918866ea0ee981bc26151332b730abccb7be8))
+* ignore two calls with undefined origin ([ab4ba76](https://github.com/zenoxcross/puter/commit/ab4ba76433ac623abaa17c0e5dd024e95b9fef3f))
+* improve backend mod error handling ([fe1a4cf](https://github.com/zenoxcross/puter/commit/fe1a4cfd4d5dd1eddbb2d50ef3f5ebf78a81656d))
+* logic from previous commit ([6ca7011](https://github.com/zenoxcross/puter/commit/6ca701139a07a0d20071cf1532cc6e95639a01da))
+* permission strings for ES services ([4d9cc9b](https://github.com/zenoxcross/puter/commit/4d9cc9bd830d0c73024f2bc5a91ab226aedefded))
+* provide actor context to ws event ([1b57801](https://github.com/zenoxcross/puter/commit/1b578019f915918e51185f5705d7fa6e0328b9ae))
+* remove inactive links in README ([f3d270c](https://github.com/zenoxcross/puter/commit/f3d270ccbcd8990270cf968a3638b7affa2df6ba))
+* remove redundant notification query ([f87769b](https://github.com/zenoxcross/puter/commit/f87769b445d53e6322a55a788e26d38629299ae9))
+* remove unnecessary `integrity` and `crossorigin` attributes in dev center when linking to jquery ([8dec78b](https://github.com/zenoxcross/puter/commit/8dec78b090ec4434ad77003d6f3c25de98779864))
+* remove unnecessary `item_path` definition in `delete` fs api ([c792f4a](https://github.com/zenoxcross/puter/commit/c792f4a345b307d024f73ff2817ae473b2620913))
+* resolve issue [#983](https://github.com/zenoxcross/puter/issues/983) - Stuck on Creating new app loading screen ([c75c9d0](https://github.com/zenoxcross/puter/commit/c75c9d03833af52730cac89a8fee5f5c317f0f78))
+* **security:** verify dest_node uid matches signature ([e208b99](https://github.com/zenoxcross/puter/commit/e208b99d211e98cd88e0a8b2917bbe6b2f2423a0))
+* share only emails email_confirmed recipients ([2336a62](https://github.com/zenoxcross/puter/commit/2336a62b4f635c025b02bb7efe91b5ddf58bae25))
+* signup 500 for temp user ([01395f3](https://github.com/zenoxcross/puter/commit/01395f302e763cdad022c0e5a995869fcd805d86))
+* sorting bug in AIChatService ([7acb096](https://github.com/zenoxcross/puter/commit/7acb096addd58113cc8d4338ba941cd14ac81f4f))
+* taskbar items of apps should always appear before Trash ([94e7f5d](https://github.com/zenoxcross/puter/commit/94e7f5deb4330a844a680c22f55b8753225a1a7e))
+* test issues from contextlink removal ([545e7db](https://github.com/zenoxcross/puter/commit/545e7db5bdac6e39962390469767667bc62857fd))
+* undefined APIOrigin ([340c7a8](https://github.com/zenoxcross/puter/commit/340c7a821fb91e2d106c2b3febf8182de7b21f7d))
+* update package-lock.json ([8577185](https://github.com/zenoxcross/puter/commit/857718538b8a7bf27dc036f4eeb3728cb6ea96e7))
+* update test kernel ([a1c2226](https://github.com/zenoxcross/puter/commit/a1c2226561655e091cbc0d014ada62bfc7881f2a))
+
+
+### Performance Improvements
+
+* multiple kv keys ([5a68691](https://github.com/zenoxcross/puter/commit/5a68691290f1c34883cd093b4df2fb7f8ac6252c))
+* single request for gui boot kv keys ([fd6f8bf](https://github.com/zenoxcross/puter/commit/fd6f8bf2256af361ea9853fc61aee2b0101b6c4a))
+
 ## v2.4.2 (2024-07-22)
 
 ### Puter
