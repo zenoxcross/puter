@@ -86,7 +86,7 @@ class PRAnalyzer {
         console.log(`🤖 Analyzing with Claude AI...`);
         if (issueNumbers.length === 0) {
           console.log(`📝 Performing PR description-based analysis`);
-          analysis = await this.analyzeWithClaudeNoissuess(prData, fileChanges);
+          analysis = await this.analyzeWithClaudeNoIssues(prData, fileChanges);
         } else {
           analysis = await this.analyzeWithClaude(prData, issues, fileChanges);
         }
@@ -243,7 +243,7 @@ class PRAnalyzer {
     return meaningfulFiles.length > 0 && meaningfulFiles.some(file => file.changes > 1);
   }
 
-  async analyzeWithClaudeNoissuess(prData, fileChanges) {
+  async analyzeWithClaudeNoIssues(prData, fileChanges) {
     const prompt = this.buildNoIssuesAnalysisPrompt(prData, fileChanges);
     
     try {
