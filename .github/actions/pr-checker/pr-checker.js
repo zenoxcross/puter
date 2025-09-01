@@ -48,7 +48,7 @@ runs:
     - name: Install action dependencies
       shell: bash
       working-directory: ${{ github.action_path }}
-      run: npm ci
+      run: npm install
       
     - name: Run PR analysis and comment
       shell: bash
