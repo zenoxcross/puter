@@ -272,7 +272,7 @@ class PRAnalyzer {
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 3000,
           messages: [{
             role: 'user',
@@ -350,7 +350,7 @@ ${file.patch ? `**Code Changes:**\n\`\`\`diff\n${file.patch.substring(0, 1500)}\
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 3000,
           messages: [{
             role: 'user',
