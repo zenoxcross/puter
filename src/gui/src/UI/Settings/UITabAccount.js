@@ -37,6 +37,10 @@ export default {
         h += `<div style="overflow: hidden; display: flex; margin-bottom: 20px; flex-direction: column; align-items: center;">`;
             h += `<div class="profile-picture change-profile-picture" style="background-image: url('${html_encode(window.user?.profile?.picture ?? window.icons['profile.svg'])}');">`;
             h += `</div>`;
+            // Only show remove button if user has a custom profile picture
+            if (window.user?.profile?.picture && window.user.profile.picture !== window.icons['profile.svg']) {
+                h += `<button class="button remove-profile-picture" style="margin-top: 10px;">${i18n('remove_profile_picture')}</button>`;
+            }
         h += `</div>`;
 
         // change password button
@@ -148,6 +152,20 @@ export default {
                 is_openFileDialog: true,
                 selectable_body: false,
             });    
+        })
+
+        $el_window.find('.remove-profile-picture').on('click', async function (e) {
+            
+            // Remove profile picture by setting it to null
+            update_profile(window.user.username, {picture: null});
+            
+            // Update the UI to show default profile picture
+            $el_window.find('.profile-picture').css('background-image', 'url(' + html_encode(window.icons['profile.svg']) + ')');
+            $('.profile-image').css('background-image', 'url(' + html_encode(window.icons['profile.svg']) + ')');
+            $('.profile-image').removeClass('profile-image-has-picture');
+            
+            // Remove the remove button since there's no custom picture anymore
+            $el_window.find('.remove-profile-picture').remove();
         })
 
         $el_window.on('file_opened', async function(e){
