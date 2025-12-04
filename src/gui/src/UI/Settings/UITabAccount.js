@@ -37,6 +37,9 @@ export default {
         h += `<div style="overflow: hidden; display: flex; margin-bottom: 20px; flex-direction: column; align-items: center;">`;
             h += `<div class="profile-picture change-profile-picture" style="background-image: url('${html_encode(window.user?.profile?.picture ?? window.icons['profile.svg'])}');">`;
             h += `</div>`;
+            if(window.user?.profile?.picture){
+                h += `<button class="button remove-profile-picture" style="margin-top: 10px;">${i18n('remove_profile_picture')}</button>`;
+            }
         h += `</div>`;
 
         // change password button
@@ -150,6 +153,45 @@ export default {
             });    
         })
 
+        // Use event delegation for remove profile picture button (works for dynamically added buttons)
+        $el_window.on('click', '.remove-profile-picture', async function (e) {
+            e.stopPropagation();
+            // remove profile picture from profile
+            puter.fs.read('/'+window.user.username+'/Public/.profile').then((blob)=>{
+                blob.text()
+                .then(text => {
+                    const profile = JSON.parse(text);
+                    // remove picture property
+                    delete profile.picture;
+                    // update window.user.profile
+                    delete window.user.profile.picture;
+                    
+                    // write updated profile
+                    puter.fs.write('/'+window.user.username+'/Public/.profile', JSON.stringify(profile))
+                    .then(() => {
+                        // update UI to show default icon
+                        const defaultIcon = window.icons['profile.svg'];
+                        $el_window.find('.profile-picture').css('background-image', 'url(' + html_encode(defaultIcon) + ')');
+                        $('.profile-image').css('background-image', 'url(' + html_encode(defaultIcon) + ')');
+                        $('.profile-image').removeClass('profile-image-has-picture');
+                        // clear profile-pic background if it exists
+                        $('.profile-pic').css('background-image', '');
+                        // hide remove button
+                        $el_window.find('.remove-profile-picture').remove();
+                    });
+                })
+                .catch(error => {
+                    console.error('Error converting Blob to JSON:', error);
+                });
+            }).catch((e)=>{
+                if(e?.code === "subject_does_not_exist"){
+                    // create .profile file
+                    puter.fs.write('/'+window.user.username+'/Public/.profile', JSON.stringify({}));
+                }
+                console.log(e);
+            });
+        })
+
         $el_window.on('file_opened', async function(e){
             let selected_file = Array.isArray(e.detail) ? e.detail[0] : e.detail;
             // set profile picture
@@ -174,6 +216,10 @@ export default {
                     $('.profile-image').addClass('profile-image-has-picture');
                     // update profile picture
                     update_profile(window.user.username, {picture: base64data})
+                    // show remove button if it doesn't exist
+                    if($el_window.find('.remove-profile-picture').length === 0){
+                        $el_window.find('.profile-picture').parent().append(`<button class="button remove-profile-picture" style="margin-top: 10px;">${i18n('remove_profile_picture')}</button>`);
+                    }
                 }
             }
         })
