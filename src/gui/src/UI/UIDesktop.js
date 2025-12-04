@@ -1151,6 +1151,98 @@ async function UIDesktop(options){
     // adjust window container to take into account the toolbar height
     $('.window-container').css('top', window.toolbar_height);
 
+    // --------------------------------------------------------------------------------------
+    // Toolbar auto-hide functionality
+    // --------------------------------------------------------------------------------------
+    let toolbarHideTimeout = null;
+    const TOOLBAR_HIDE_DELAY = 2000; // 2 seconds
+    const TOOLBAR_SHOW_PROXIMITY = 50; // top 50px of screen
+
+    function initToolbarAutoHide() {
+        const $toolbar = $('.toolbar');
+        if (!$toolbar.length) return;
+
+        // Clean up previous event listeners
+        $(document).off('mousemove.toolbarAutoHide click.toolbarAutoHide');
+        $toolbar.off('mouseenter.toolbarAutoHide');
+        
+        // Clear any pending timeout
+        if (toolbarHideTimeout) {
+            clearTimeout(toolbarHideTimeout);
+            toolbarHideTimeout = null;
+        }
+
+        // Check if auto-hide is enabled
+        const isAutoHideEnabled = window.user_preferences?.toolbar_auto_hide ?? false;
+        if (!isAutoHideEnabled) {
+            // Ensure toolbar is visible if auto-hide is disabled
+            $toolbar.removeClass('toolbar-hidden');
+            return;
+        }
+
+        function showToolbar() {
+            $toolbar.removeClass('toolbar-hidden');
+            // Clear any pending hide timeout
+            if (toolbarHideTimeout) {
+                clearTimeout(toolbarHideTimeout);
+                toolbarHideTimeout = null;
+            }
+        }
+
+        function hideToolbar() {
+            // Only hide if auto-hide is still enabled
+            if (window.user_preferences?.toolbar_auto_hide) {
+                $toolbar.addClass('toolbar-hidden');
+            }
+        }
+
+        function scheduleHide() {
+            // Clear existing timeout
+            if (toolbarHideTimeout) {
+                clearTimeout(toolbarHideTimeout);
+            }
+            // Schedule hide after delay
+            toolbarHideTimeout = setTimeout(hideToolbar, TOOLBAR_HIDE_DELAY);
+        }
+
+        // Track mouse movement
+        $(document).on('mousemove.toolbarAutoHide', function(e) {
+            const mouseY = e.clientY;
+
+            // Show toolbar if mouse is near top edge
+            if (mouseY <= TOOLBAR_SHOW_PROXIMITY) {
+                showToolbar();
+            } else {
+                // Mouse moved away from top, schedule hide
+                scheduleHide();
+            }
+        });
+
+        // Show toolbar on mouse enter (when hovering over toolbar area)
+        $toolbar.on('mouseenter.toolbarAutoHide', function() {
+            showToolbar();
+        });
+
+        // Schedule initial hide after delay
+        scheduleHide();
+
+        // Also show toolbar on any click (user interaction)
+        $(document).on('click.toolbarAutoHide', function() {
+            showToolbar();
+            scheduleHide();
+        });
+    }
+
+    // Initialize auto-hide after a short delay to ensure toolbar is rendered
+    setTimeout(() => {
+        initToolbarAutoHide();
+    }, 100);
+
+    // Re-initialize when preferences change
+    $(document).on('user_preferences_updated', function() {
+        initToolbarAutoHide();
+    });
+
     // track: checkpoint
     //-----------------------------
     // GUI is ready to launch apps!

@@ -47,6 +47,8 @@ const en = {
         change_ui_colors: "Change UI Colors",
         change_username: "Change Username",
         clock_visibility: 'Clock Visibility',
+        toolbar_auto_hide: 'Toolbar Auto-Hide',
+        toolbar_auto_hide_description: 'Automatically hide the toolbar after inactivity and show it when the mouse moves near the top',
         close: 'Close',
         close_all_windows: "Close All Windows",
         close_all_windows_confirm: "Are you sure you want to close all windows?",

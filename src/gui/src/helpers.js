@@ -548,6 +548,9 @@ window.update_user_preferences = function(user_preferences) {
     broadcastService.sendBroadcast('localeChanged', {
         language: language,
     }, { sendToNewAppInstances: true });
+
+    // Trigger event for toolbar auto-hide and other preference-dependent features
+    $(document).trigger('user_preferences_updated');
 }
 
 window.sendWindowWillCloseMsg = function(iframe_element) {
