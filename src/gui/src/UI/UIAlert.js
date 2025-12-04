@@ -34,6 +34,26 @@ function UIAlert(options){
     }
 
     return new Promise(async (resolve) => {
+        // Normalize buttons: convert string arrays to object arrays
+        if(options.buttons && Array.isArray(options.buttons)){
+            options.buttons = options.buttons.map((btn, index) => {
+                // If button is a string, convert to object
+                if(typeof btn === 'string'){
+                    return {
+                        label: btn,
+                        value: btn,
+                        type: index === options.buttons.length - 1 ? 'primary' : 'default'
+                    };
+                }
+                // If button is already an object, ensure it has required properties
+                return {
+                    label: btn.label || btn,
+                    value: btn.value ?? btn.label ?? btn,
+                    type: btn.type || (index === options.buttons.length - 1 ? 'primary' : 'default')
+                };
+            });
+        }
+
         // provide an 'OK' button if no buttons are provided
         if(!options.buttons || options.buttons.length === 0){
             options.buttons = [
@@ -41,10 +61,26 @@ function UIAlert(options){
             ]
         }
 
-        // set body icon
-        options.body_icon = options.body_icon ?? window.icons['warning-sign.svg'];
-        if(options.type === 'success')
-            options.body_icon = window.icons['c-check.svg'];
+        // Icon mapping for different alert types
+        const typeIconMap = {
+            'info': 'reminder.svg',
+            'success': 'c-check.svg',
+            'warning': 'warning-sign.svg',
+            'error': 'danger.svg',
+            'question': 'reminder.svg'
+        };
+
+        // Set body icon: custom icon override > type-based icon > default warning
+        if(options.icon){
+            // Custom icon override - can be a string (icon name) or direct path
+            options.body_icon = typeof options.icon === 'string' && options.icon.endsWith('.svg') 
+                ? (window.icons[options.icon] || options.icon)
+                : options.icon;
+        } else if(options.type && typeIconMap[options.type]){
+            options.body_icon = window.icons[typeIconMap[options.type]] || window.icons['warning-sign.svg'];
+        } else {
+            options.body_icon = options.body_icon ?? window.icons['warning-sign.svg'];
+        }
 
         let santized_message = html_encode(options.message);
 
@@ -57,21 +93,40 @@ function UIAlert(options){
         santized_message = santized_message.replace(/&lt;\/p&gt;/g, '</p>');
 
         let h = '';
-        // icon
-        h += `<img class="window-alert-icon" src="${html_encode(options.body_icon)}">`;
-        // message
-        h += `<div class="window-alert-message">${santized_message}</div>`;
-        // buttons
-        if(options.buttons && options.buttons.length > 0){
-            h += `<div style="overflow:hidden; margin-top:20px;">`;
-            for(let y=0; y<options.buttons.length; y++){
-                h += `<button class="button button-block button-${html_encode(options.buttons[y].type)} alert-resp-button" 
-                                data-label="${html_encode(options.buttons[y].label)}"
-                                data-value="${html_encode(options.buttons[y].value ?? options.buttons[y].label)}"
-                                ${options.buttons[y].type === 'primary' ? 'autofocus' : ''}
-                                >${html_encode(options.buttons[y].label)}</button>`;
+        
+        // Use custom UI if provided, otherwise build default UI
+        if(options.customUI){
+            h = options.customUI;
+            // If customUI is provided but buttons are also specified, append buttons
+            // This allows custom content with standard button handling
+            if(options.buttons && options.buttons.length > 0){
+                h += `<div style="overflow:hidden; margin-top:20px;">`;
+                for(let y=0; y<options.buttons.length; y++){
+                    h += `<button class="button button-block button-${html_encode(options.buttons[y].type)} alert-resp-button" 
+                                    data-label="${html_encode(options.buttons[y].label)}"
+                                    data-value="${html_encode(options.buttons[y].value ?? options.buttons[y].label)}"
+                                    ${options.buttons[y].type === 'primary' ? 'autofocus' : ''}
+                                    >${html_encode(options.buttons[y].label)}</button>`;
+                }
+                h += `</div>`;
             }
-            h += `</div>`;
+        } else {
+            // icon
+            h += `<img class="window-alert-icon" src="${html_encode(options.body_icon)}">`;
+            // message
+            h += `<div class="window-alert-message">${santized_message}</div>`;
+            // buttons
+            if(options.buttons && options.buttons.length > 0){
+                h += `<div style="overflow:hidden; margin-top:20px;">`;
+                for(let y=0; y<options.buttons.length; y++){
+                    h += `<button class="button button-block button-${html_encode(options.buttons[y].type)} alert-resp-button" 
+                                    data-label="${html_encode(options.buttons[y].label)}"
+                                    data-value="${html_encode(options.buttons[y].value ?? options.buttons[y].label)}"
+                                    ${options.buttons[y].type === 'primary' ? 'autofocus' : ''}
+                                    >${html_encode(options.buttons[y].label)}</button>`;
+                }
+                h += `</div>`;
+            }
         }
 
         const el_window = await UIWindow({

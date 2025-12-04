@@ -622,7 +622,23 @@ class UI extends EventListener {
 
     alert = function(message, buttons, options, callback) {
         return new Promise((resolve) => {
-            this.#postMessageWithCallback('ALERT', resolve, { message, buttons, options });
+            // Support new options object format: alert({ type, message, icon, buttons, customUI })
+            if(typeof message === 'object' && message !== null && !Array.isArray(message) && message.message !== undefined){
+                const opts = message;
+                this.#postMessageWithCallback('ALERT', resolve, { 
+                    message: opts.message,
+                    buttons: opts.buttons,
+                    options: {
+                        type: opts.type,
+                        icon: opts.icon,
+                        customUI: opts.customUI,
+                        ...opts.options
+                    }
+                });
+            } else {
+                // Support old format: alert(message, buttons, options)
+                this.#postMessageWithCallback('ALERT', resolve, { message, buttons, options });
+            }
         })
     }
 
