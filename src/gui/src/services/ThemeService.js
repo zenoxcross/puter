@@ -122,6 +122,31 @@ export class ThemeService extends Service {
         this.root.style.setProperty('--primary-alpha', s.alpha);
         this.root.style.setProperty('--primary-color', s.light_text ? 'white' : '#373e44');
 
+        // Calculate sidebar title color based on effective sidebar background lightness
+        // Sidebar background uses: hsla(hue, sat, lightness, calc(0.5 + 0.5*alpha))
+        // Effective alpha blends with white background, so we need to calculate effective lightness
+        const sidebarAlpha = Math.min(1, 0.11 + s.alpha);
+        const effectiveSidebarAlpha = 0.5 + 0.5 * sidebarAlpha;
+        
+        // Calculate effective lightness: blend between theme lightness and white (100% lightness)
+        // Formula: effective = background * alpha + white * (1 - alpha)
+        const effectiveSidebarLightness = (s.lig / 100) * effectiveSidebarAlpha + (1 - effectiveSidebarAlpha);
+        
+        // Use dark text for light backgrounds (lightness >= 0.5), light text for dark backgrounds
+        // Add a small buffer (0.45) to ensure good contrast before switching
+        const isLightBackground = effectiveSidebarLightness >= 0.45;
+        const sidebarTitleColor = isLightBackground 
+            ? '#5a5f66'  // Dark gray for light backgrounds (WCAG AA compliant)
+            : '#e8eaed'; // Light gray for dark backgrounds (WCAG AA compliant)
+        
+        // Adaptive text-shadow: subtle shadow for light backgrounds, darker shadow for dark backgrounds
+        const sidebarTitleShadow = isLightBackground
+            ? '1px 1px rgba(0, 0, 0, 0.08)'  // Subtle dark shadow for light backgrounds
+            : '1px 1px rgba(0, 0, 0, 0.3)';  // More pronounced shadow for dark backgrounds
+        
+        this.root.style.setProperty('--window-sidebar-title-color', sidebarTitleColor);
+        this.root.style.setProperty('--window-sidebar-title-shadow', sidebarTitleShadow);
+
         // TODO: Should we debounce this to reduce traffic?
         this.#broadcastService.sendBroadcast('themeChanged', {
             palette: {
