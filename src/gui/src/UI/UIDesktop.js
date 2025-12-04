@@ -487,6 +487,11 @@ async function UIDesktop(options){
         $(`.item-container[data-path='${html_encode(dest_path)}' i]`).each(function(){
             window.sort_items(this, $(this).attr('data-sort_by'), $(this).attr('data-sort_order'))
         })
+        
+        // Apply desktop icons visibility preference if item was moved to desktop
+        if(dest_path === window.desktop_path && window.user_preferences.desktop_icons_visible !== undefined){
+            window.toggle_desktop_icons_visibility(window.user_preferences.desktop_icons_visible);
+        }
     });
     
     window.socket.on('user.email_confirmed', (msg) => {
@@ -632,6 +637,11 @@ async function UIDesktop(options){
             $(`.item-container[data-path='${html_encode(item.dirpath)}' i]`).each(function(){
                 window.sort_items(this, $(this).attr('data-sort_by'), $(this).attr('data-sort_order'))
             })
+            
+            // Apply desktop icons visibility preference if item was added to desktop
+            if(item.dirpath === window.desktop_path && window.user_preferences.desktop_icons_visible !== undefined){
+                window.toggle_desktop_icons_visibility(window.user_preferences.desktop_icons_visible);
+            }
         }
     });
 
@@ -710,6 +720,7 @@ async function UIDesktop(options){
         show_hidden_files: JSON.parse(await puter.kv.get('user_preferences.show_hidden_files')),
         language: await puter.kv.get('user_preferences.language'),
         clock_visible: await puter.kv.get('user_preferences.clock_visible'),
+        desktop_icons_visible: JSON.parse(await puter.kv.get('user_preferences.desktop_icons_visible')) ?? true,
     };
 
     // update default apps
@@ -719,6 +730,11 @@ async function UIDesktop(options){
         }
 
         window.update_user_preferences(user_preferences);
+        
+        // Apply desktop icons visibility preference
+        if(window.user_preferences.desktop_icons_visible !== undefined){
+            window.toggle_desktop_icons_visibility(window.user_preferences.desktop_icons_visible);
+        }
     });
 
     // Append to <body>
@@ -1000,6 +1016,23 @@ async function UIDesktop(options){
                             UIWindowDesktopBGSettings();
                         }
                     },
+                    // -------------------------------------------
+                    // -
+                    // -------------------------------------------
+                    '-',
+                    // -------------------------------------------
+                    // Show/Hide Desktop Icons
+                    // -------------------------------------------
+                    {
+                        html: window.user_preferences.desktop_icons_visible ? i18n('hide_desktop_icons') : i18n('show_desktop_icons'),
+                        onClick: function(){
+                            const new_value = !window.user_preferences.desktop_icons_visible;
+                            window.mutate_user_preferences({
+                                desktop_icons_visible: new_value,
+                            });
+                            window.toggle_desktop_icons_visibility(new_value);
+                        }
+                    },
 
                 ]
             });
@@ -1013,6 +1046,13 @@ async function UIDesktop(options){
     //-------------------------------------------
     if(!window.is_embedded && !window.is_fullpage_mode){
         refresh_item_container(el_desktop, {fadeInItems: true})
+        
+        // Apply desktop icons visibility preference after items are loaded
+        setTimeout(() => {
+            if(window.user_preferences.desktop_icons_visible !== undefined){
+                window.toggle_desktop_icons_visibility(window.user_preferences.desktop_icons_visible);
+            }
+        }, 500);
 
         // Show welcome window if user hasn't already seen it and hasn't directly navigated to an app 
         if(!window.url_paths[0]?.toLocaleLowerCase() === 'app' || !window.url_paths[1]){

@@ -780,6 +780,14 @@ window.show_or_hide_files = (item_containers) => {
         .removeClass(class_to_remove).addClass(class_to_add);
 }
 
+window.toggle_desktop_icons_visibility = (visible) => {
+    if(visible){
+        $('.desktop.item-container > .item').show();
+    }else{
+        $('.desktop.item-container > .item').hide();
+    }
+}
+
 window.create_folder = async(basedir, appendto_element)=>{
 	let dirname = basedir;
     let folder_name = 'New Folder';
