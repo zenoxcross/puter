@@ -35,7 +35,12 @@ export default {
 
         // profile picture
         h += `<div style="overflow: hidden; display: flex; margin-bottom: 20px; flex-direction: column; align-items: center;">`;
-            h += `<div class="profile-picture change-profile-picture" style="background-image: url('${html_encode(window.user?.profile?.picture ?? window.icons['profile.svg'])}');">`;
+            h += `<div class="profile-picture" style="background-image: url('${html_encode(window.user?.profile?.picture ?? window.icons['profile.svg'])}');">`;
+            h += `</div>`;
+            // profile picture buttons
+            h += `<div style="display: flex; gap: 10px; margin-top: 10px;">`;
+                h += `<button class="button change-profile-picture">${i18n('change_profile_picture')}</button>`;
+                h += `<button class="button button-danger remove-profile-picture" style="${window.user?.profile?.picture ? '' : 'display: none;'}">${i18n('remove_profile_picture')}</button>`;
             h += `</div>`;
         h += `</div>`;
 
@@ -150,6 +155,22 @@ export default {
             });    
         })
 
+        $el_window.find('.remove-profile-picture').on('click', async function (e) {
+            // Remove profile picture by setting it to null
+            update_profile(window.user.username, {picture: null});
+            // Update profile picture in settings window
+            $el_window.find('.profile-picture').css('background-image', 'url(' + window.icons['profile.svg'] + ')');
+            // Update profile picture in all other locations
+            $('.profile-image').css('background-image', 'url(' + window.icons['profile.svg'] + ')');
+            $('.profile-image').removeClass('profile-image-has-picture');
+            // Clear from window.user.profile
+            if (window.user.profile) {
+                window.user.profile.picture = null;
+            }
+            // Hide the remove button since there's no picture anymore
+            $el_window.find('.remove-profile-picture').hide();
+        })
+
         $el_window.on('file_opened', async function(e){
             let selected_file = Array.isArray(e.detail) ? e.detail[0] : e.detail;
             // set profile picture
@@ -174,6 +195,8 @@ export default {
                     $('.profile-image').addClass('profile-image-has-picture');
                     // update profile picture
                     update_profile(window.user.username, {picture: base64data})
+                    // Show the remove button since there's now a picture
+                    $el_window.find('.remove-profile-picture').show();
                 }
             }
         })
