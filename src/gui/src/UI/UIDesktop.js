@@ -1145,11 +1145,147 @@ async function UIDesktop(options){
     // prepend toolbar to desktop
     $(ht).insertBefore(el_desktop);
 
+    // Add toolbar hover zone for auto-hide detection
+    $('body').prepend('<div class="toolbar-hover-zone"></div>');
+
     // notification container
     $('body').append(`<div class="notification-container"><div class="notifications-close-all">${i18n('close_all')}</div></div>`);
 
     // adjust window container to take into account the toolbar height
     $('.window-container').css('top', window.toolbar_height);
+
+    // ---------------------------------------------------------------
+    // Toolbar Auto-Hide Feature
+    // ---------------------------------------------------------------
+    window.toolbar_auto_hide_timeout = null;
+    window.toolbar_is_hidden = false;
+    const TOOLBAR_HIDE_DELAY = 2000; // 2 seconds
+    const TOOLBAR_HOVER_ZONE_HEIGHT = 50; // pixels
+
+    // Initialize toolbar auto-hide based on user preference
+    puter.kv.get('user_preferences.toolbar_auto_hide').then(async (val) => {
+        window.user_preferences.toolbar_auto_hide = val === true || val === 'true';
+        window.init_toolbar_auto_hide();
+    });
+
+    // Initialize toolbar auto-hide functionality
+    window.init_toolbar_auto_hide = function() {
+        if (window.user_preferences.toolbar_auto_hide) {
+            $('body').addClass('toolbar-auto-hide-enabled');
+            window.start_toolbar_hide_timer();
+        } else {
+            $('body').removeClass('toolbar-auto-hide-enabled');
+            window.show_toolbar();
+        }
+    };
+
+    // Show the toolbar
+    window.show_toolbar = function() {
+        window.toolbar_is_hidden = false;
+        $('.toolbar').removeClass('toolbar-hidden');
+        window.clear_toolbar_hide_timer();
+        if (window.user_preferences.toolbar_auto_hide) {
+            window.start_toolbar_hide_timer();
+        }
+    };
+
+    // Hide the toolbar
+    window.hide_toolbar = function() {
+        // Don't hide if any context menus or dropdowns are open
+        if ($('.context-menu').length > 0) {
+            window.start_toolbar_hide_timer();
+            return;
+        }
+        // Don't hide if mouse is over the toolbar
+        if (window.mouse_over_toolbar) {
+            window.start_toolbar_hide_timer();
+            return;
+        }
+        window.toolbar_is_hidden = true;
+        $('.toolbar').addClass('toolbar-hidden');
+    };
+
+    // Start the timer to hide the toolbar
+    window.start_toolbar_hide_timer = function() {
+        window.clear_toolbar_hide_timer();
+        if (!window.user_preferences.toolbar_auto_hide) return;
+        
+        window.toolbar_auto_hide_timeout = setTimeout(() => {
+            window.hide_toolbar();
+        }, TOOLBAR_HIDE_DELAY);
+    };
+
+    // Clear the hide timer
+    window.clear_toolbar_hide_timer = function() {
+        if (window.toolbar_auto_hide_timeout) {
+            clearTimeout(window.toolbar_auto_hide_timeout);
+            window.toolbar_auto_hide_timeout = null;
+        }
+    };
+
+    // Toggle toolbar auto-hide setting
+    window.toggle_toolbar_auto_hide = function(enabled) {
+        window.user_preferences.toolbar_auto_hide = enabled;
+        puter.kv.set('user_preferences.toolbar_auto_hide', enabled);
+        window.init_toolbar_auto_hide();
+    };
+
+    // Track if mouse is over toolbar
+    window.mouse_over_toolbar = false;
+
+    // Mouse enters toolbar - show and keep visible
+    $(document).on('mouseenter', '.toolbar', function() {
+        window.mouse_over_toolbar = true;
+        window.show_toolbar();
+    });
+
+    // Mouse leaves toolbar - start hide timer
+    $(document).on('mouseleave', '.toolbar', function() {
+        window.mouse_over_toolbar = false;
+        if (window.user_preferences.toolbar_auto_hide) {
+            window.start_toolbar_hide_timer();
+        }
+    });
+
+    // Mouse enters hover zone at top of screen - show toolbar
+    $(document).on('mouseenter', '.toolbar-hover-zone', function() {
+        if (window.user_preferences.toolbar_auto_hide && window.toolbar_is_hidden) {
+            window.show_toolbar();
+        }
+    });
+
+    // Global mouse move handler for edge detection when toolbar is hidden
+    $(document).on('mousemove', function(e) {
+        if (!window.user_preferences.toolbar_auto_hide) return;
+        
+        // If mouse is in top 50px zone and toolbar is hidden, show it
+        if (e.clientY <= TOOLBAR_HOVER_ZONE_HEIGHT && window.toolbar_is_hidden) {
+            window.show_toolbar();
+        }
+    });
+
+    // When context menu opens, prevent toolbar from hiding
+    window.addEventListener('ctxmenu-will-open', function() {
+        window.clear_toolbar_hide_timer();
+    });
+
+    // Watch for context menu removal to restart hide timer
+    // Use a MutationObserver to detect when all context menus are closed
+    const contextMenuObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.removedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && $(node).hasClass('context-menu')) {
+                    // A context menu was removed, check if all are gone
+                    setTimeout(() => {
+                        if ($('.context-menu').length === 0 && window.user_preferences.toolbar_auto_hide && !window.mouse_over_toolbar) {
+                            window.start_toolbar_hide_timer();
+                        }
+                    }, 100);
+                }
+            });
+        });
+    });
+    contextMenuObserver.observe(document.body, { childList: true });
 
     // track: checkpoint
     //-----------------------------
