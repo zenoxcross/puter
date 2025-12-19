@@ -346,6 +346,11 @@ input[type=text]:focus, input[type=password]:focus, input[type=email]:focus, sel
     grid-template-columns: repeat(auto-fill, 120px);
 }
 
+/* Hide desktop icons when the toggle is active */
+.desktop.desktop-icons-hidden > .item {
+    display: none !important;
+}
+
 .fullpage-mode .window-minimize-btn {
     display: none;
 }

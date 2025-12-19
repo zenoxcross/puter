@@ -708,6 +708,7 @@ async function UIDesktop(options){
     // update local user preferences
     const user_preferences = {
         show_hidden_files: JSON.parse(await puter.kv.get('user_preferences.show_hidden_files')),
+        show_desktop_icons: JSON.parse(await puter.kv.get('user_preferences.show_desktop_icons')) ?? true,
         language: await puter.kv.get('user_preferences.language'),
         clock_visible: await puter.kv.get('user_preferences.clock_visible'),
     };
@@ -944,6 +945,19 @@ async function UIDesktop(options){
                         }
                     },
                     // -------------------------------------------
+                    // Show/Hide desktop icons
+                    // -------------------------------------------
+                    {
+                        html: window.user_preferences.show_desktop_icons ? i18n('hide_desktop_icons') : i18n('show_desktop_icons'),
+                        onClick: function(){
+                            const new_value = !window.user_preferences.show_desktop_icons;
+                            window.mutate_user_preferences({
+                                show_desktop_icons: new_value,
+                            });
+                            window.apply_desktop_icons_visibility(new_value);
+                        }
+                    },
+                    // -------------------------------------------
                     // -
                     // -------------------------------------------
                     '-',
@@ -1013,6 +1027,9 @@ async function UIDesktop(options){
     //-------------------------------------------
     if(!window.is_embedded && !window.is_fullpage_mode){
         refresh_item_container(el_desktop, {fadeInItems: true})
+
+        // Apply desktop icons visibility preference
+        window.apply_desktop_icons_visibility(window.user_preferences.show_desktop_icons ?? true);
 
         // Show welcome window if user hasn't already seen it and hasn't directly navigated to an app 
         if(!window.url_paths[0]?.toLocaleLowerCase() === 'app' || !window.url_paths[1]){
