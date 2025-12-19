@@ -1481,6 +1481,23 @@ span.header-sort-icon img {
     margin-top: 10px;
 }
 
+.alert-resp-button:first-child {
+    margin-top: 0;
+}
+
+/* Secondary button style for alerts */
+.button-secondary {
+    border-color: #b9b9b9;
+    background: linear-gradient(#f6f6f6, #e1e1e1);
+    color: #555555;
+}
+
+.button-secondary:active, .button-secondary.active, .button-secondary.is-active {
+    background: #d5d5d5;
+    border-color: #a9a9a9;
+    color: #444444;
+}
+
 .prompt-resp-button {
     margin-left: 10px;
 }
