@@ -19,6 +19,50 @@
 
 import UIWindow from './UIWindow.js'
 
+/**
+ * Alert type configurations with icons and default buttons
+ * Each type has:
+ * - icon: The icon file to display
+ * - buttons: Default button configuration for this type
+ */
+const ALERT_TYPE_CONFIGS = {
+    info: {
+        icon: 'info.svg',
+        buttons: [
+            { label: 'ok', value: true, type: 'primary' }
+        ]
+    },
+    warning: {
+        icon: 'warning-sign.svg',
+        buttons: [
+            { label: 'ok', value: true, type: 'primary' }
+        ]
+    },
+    error: {
+        icon: 'danger.svg',
+        buttons: [
+            { label: 'retry', value: 'retry', type: 'primary' },
+            { label: 'cancel', value: false, type: 'secondary' }
+        ]
+    },
+    success: {
+        icon: 'c-check.svg',
+        buttons: [
+            { label: 'ok', value: true, type: 'primary' }
+        ]
+    },
+    confirm: {
+        icon: 'question.svg',
+        buttons: [
+            { label: 'yes', value: true, type: 'primary' },
+            { label: 'no', value: false, type: 'secondary' }
+        ]
+    }
+};
+
+// Default configuration when no type is specified
+const DEFAULT_TYPE_CONFIG = ALERT_TYPE_CONFIGS.warning;
+
 function UIAlert(options){
     // set sensible defaults
     if(arguments.length > 0){
@@ -34,17 +78,20 @@ function UIAlert(options){
     }
 
     return new Promise(async (resolve) => {
-        // provide an 'OK' button if no buttons are provided
+        // Get type configuration (fallback to default if type is undefined or not recognized)
+        const typeConfig = ALERT_TYPE_CONFIGS[options.type] ?? DEFAULT_TYPE_CONFIG;
+
+        // Apply default buttons from type config if no buttons are provided
         if(!options.buttons || options.buttons.length === 0){
-            options.buttons = [
-                {label: i18n('ok'), value: true, type: 'primary'}
-            ]
+            // Translate button labels using i18n
+            options.buttons = typeConfig.buttons.map(btn => ({
+                ...btn,
+                label: i18n(btn.label)
+            }));
         }
 
-        // set body icon
-        options.body_icon = options.body_icon ?? window.icons['warning-sign.svg'];
-        if(options.type === 'success')
-            options.body_icon = window.icons['c-check.svg'];
+        // Set body icon: use provided icon, or fall back to type-specific icon
+        options.body_icon = options.body_icon ?? window.icons[typeConfig.icon];
 
         let santized_message = html_encode(options.message);
 
