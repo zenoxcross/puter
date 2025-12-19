@@ -780,6 +780,24 @@ window.show_or_hide_files = (item_containers) => {
         .removeClass(class_to_remove).addClass(class_to_add);
 }
 
+/**
+ * Applies the desktop icons visibility setting.
+ * When show is false, all desktop icons are hidden but remain in the DOM.
+ * When show is true, all desktop icons are shown again.
+ * 
+ * @param {boolean} show - Whether to show or hide desktop icons
+ */
+window.apply_desktop_icons_visibility = (show) => {
+    const desktop = document.querySelector('.desktop');
+    if (desktop) {
+        if (show) {
+            desktop.classList.remove('desktop-icons-hidden');
+        } else {
+            desktop.classList.add('desktop-icons-hidden');
+        }
+    }
+}
+
 window.create_folder = async(basedir, appendto_element)=>{
 	let dirname = basedir;
     let folder_name = 'New Folder';
