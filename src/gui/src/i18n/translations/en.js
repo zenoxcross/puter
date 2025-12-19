@@ -292,6 +292,7 @@ const en = {
         taskmgr_header_type: "Type",
         terms: "Terms",
         text_document: 'Text document',
+        toolbar_auto_hide: 'Auto-hide Toolbar',
         tos_fineprint: `By clicking 'Create Free Account' you agree to Puter's {{link=terms}}Terms of Service{{/link}} and {{link=privacy}}Privacy Policy{{/link}}.`,
         transparency: "Transparency",
         trash: 'Trash',
